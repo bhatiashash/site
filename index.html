@@ -52,6 +52,16 @@
   .scene .repo{margin-top:26px;font-size:12px}
   .scene .repo a{color:var(--g600)}
   .scene .repo a:hover{color:var(--accent)}
+  #scene-firstfocus .sub{margin-bottom:16px}
+  .project-overview{width:min(760px,100%);margin-bottom:24px;flex-shrink:0}
+  .project-lede{font-family:var(--serif);font-size:clamp(1.2rem,2.5vw,1.4rem);
+    line-height:1.4;max-width:32em;margin:0 auto 20px;text-align:center}
+  .project-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:24px;margin:0;font-size:11.5px;line-height:1.6}
+  .project-facts dt{margin-bottom:4px;color:var(--ink)}
+  .project-facts dd{margin:0;color:var(--g600)}
+  .scene .demo-note{width:min(760px,100%);margin:0;font-size:11px;
+    line-height:1.6;color:var(--g600);text-align:center;flex-shrink:0}
   .intro-text{font-family:var(--serif);font-size:clamp(1.3rem,3vw,1.7rem);
     line-height:1.45;max-width:34em;text-align:center;margin:0}
   .intro-text .w{opacity:.12;transition:opacity .3s ease}
@@ -71,6 +81,7 @@
     .wordmark{font-size:22px}
     .links{top:auto;bottom:24px;right:24px}
     .hint{display:none}
+    .project-facts{grid-template-columns:1fr;gap:12px}
   }
 </style>
 </head>
@@ -217,11 +228,35 @@ Site.register({
 /* Scene 2: FirstFocus. A task list that keeps re-ranking itself.
    The top item is the thing that matters, so it gets the accent. */
 Site.register({
-  id:'firstfocus', title:'FirstFocus', sub:'macOS · on-device language models · open source',
+  id:'firstfocus', title:'FirstFocus', sub:'What should I focus on next?',
   repo:'https://github.com/bhatiashash/FirstFocus',
   caption:'One ranked list of what needs your attention.\nLocal model triages Reminders and Messages.\nNothing leaves the machine. Began as DailyOS.',
   create(el){
-    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const overview=document.createElement('div'); overview.className='project-overview';
+    const lede=document.createElement('p'); lede.className='project-lede';
+    lede.textContent='FirstFocus is an open-source Mac app that brings Apple Reminders and Messages together, then uses a local language model to rank what needs your attention.';
+    overview.appendChild(lede);
+    const facts=document.createElement('dl'); facts.className='project-facts';
+    [
+      { title:'Bring it together', detail:'Your reminders and messages in one place, instead of two apps to check.' },
+      { title:'Find your next step', detail:'One prioritized list helps you decide what to focus on first.' },
+      { title:'Keep it on your Mac', detail:'The language model runs on your device. Nothing leaves the machine.' }
+    ].forEach(fact=>{
+      const item=document.createElement('div');
+      const title=document.createElement('dt'); title.textContent=fact.title;
+      const detail=document.createElement('dd'); detail.textContent=fact.detail;
+      item.append(title,detail); facts.appendChild(item);
+    });
+    overview.appendChild(facts);
+    const repo=el.querySelector('.repo');
+    el.insertBefore(overview,repo);
+    repo.querySelector('a').textContent='Explore FirstFocus on GitHub →';
+    const { canvas, ctx, W, H } = Site.canvas(el, 760, 400);
+    const note=document.createElement('p'); note.className='demo-note'; note.id='firstfocus-demo-note';
+    note.textContent='Illustrative demo with sample tasks and priority scores. As priorities change, the list reorders; blue marks the top item.';
+    el.insertBefore(note,repo);
+    canvas.setAttribute('aria-label','Example of FirstFocus ranking tasks by priority, with the top task highlighted in blue.');
+    canvas.setAttribute('aria-describedby',note.id);
     const C=Site.colors, F=Site.fonts;
     const tasks=[
       { label:'Reply to the recruiter about Thursday', base:.93 },
