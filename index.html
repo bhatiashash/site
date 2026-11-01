@@ -4,108 +4,393 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shash Bhatia</title>
-<meta name="description" content="Shash Bhatia, software engineer. Work, writing, and contact.">
+<meta name="description" content="Shash Bhatia — software engineer. AI evaluation and auditing, open-source tools.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23002FA7'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    /* Electric #002FA7, after saradu.com. */
-    --bg:#ffffff; --ink:#141414; --soft:#5c5c5c; --line:#ececec;
-    --accent:#002FA7;
-    --serif:Georgia,'Times New Roman',Times,serif;
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --bg:#ffffff; --ink:#000000; --ink75:rgba(0,0,0,.75);
+    --g200:#eeeeee; --g300:#dddddd; --g400:#cccccc; --g500:#999999; --g600:#666666;
+    /* His accent stays: electric #002FA7. Used only for the thing that matters. */
+    --accent:#002FA7; --accent-soft:rgba(0,47,167,.10);
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:var(--sans);line-height:1.7;font-size:17px;
-    -webkit-font-smoothing:antialiased}
-  .wrap{max-width:600px;margin:0 auto;padding:0 22px}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);
+    -webkit-font-smoothing:antialiased;overflow:hidden}
 
-  /* Top row: name left, quiet nav right. Nothing sticky. */
-  header{padding:32px 0 0}
-  nav{display:flex;align-items:baseline;gap:18px;font-size:15px}
-  nav .name{margin-right:auto;font-family:var(--serif);font-weight:bold;
-    font-size:19px;color:var(--ink);text-decoration:none}
-  nav a{color:var(--soft);text-decoration:none}
-  nav a:hover{color:var(--accent)}
-
-  main{padding:72px 0 8px}
-  h1{font-family:var(--serif);font-weight:bold;
-    font-size:clamp(2.4rem,7vw,3rem);line-height:1.1;margin:0 0 22px;
-    letter-spacing:-0.015em}
-
-  /* The page is three short paragraphs and some links. That's the whole site. */
-  p{margin:0 0 18px;max-width:36em}
-  p.dim{color:var(--soft)}
-
-  a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;
-    text-decoration-thickness:1px}
-  a:hover{color:var(--ink)}
-
-  .rule{border:none;border-top:1px solid var(--line);margin:44px 0}
-
-  /* Contact as a Sara-style uppercase link row. */
-  .links{font-family:var(--mono);font-size:13px;letter-spacing:0.06em;
-    text-transform:uppercase}
-  .links a{color:var(--soft);text-decoration:none;margin-right:18px}
+  /* Chrome: fixed frame, content swaps inside it. */
+  .wordmark{position:fixed;top:22px;left:50%;transform:translateX(-50%);
+    font-family:var(--serif);font-size:26px;letter-spacing:-0.03em;color:var(--ink);
+    text-decoration:none;z-index:5}
+  .links{position:fixed;top:26px;right:24px;font-size:12px;z-index:5}
+  .links a{color:var(--g600);text-decoration:none;margin-left:16px}
   .links a:hover{color:var(--accent)}
+  .caption{position:fixed;left:24px;bottom:64px;font-size:11px;line-height:1.5;
+    color:var(--g600);white-space:pre-line;max-width:300px;z-index:5}
+  .index{position:fixed;left:24px;bottom:24px;font-size:12px;z-index:5}
+  .index button{background:none;border:none;font:inherit;color:var(--g600);
+    cursor:pointer;padding:2px 3px}
+  .index button:hover{color:var(--ink)}
+  .index button.active{color:var(--ink)}
+  .hint{position:fixed;right:24px;bottom:24px;font-size:11px;color:var(--g500);z-index:5}
 
-  footer{padding:0 0 80px;color:var(--soft);font-size:13.5px}
-  footer p{margin:0}
+  /* Stage: one scene at a time, crossfade only. */
+  #stage{position:fixed;inset:0}
+  .scene{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:safe center;padding:90px 24px 110px;overflow-y:auto;
+    opacity:0;pointer-events:none;transition:opacity .45s ease}
+  .scene.active{opacity:1;pointer-events:auto}
+  .scene h1{font-family:var(--serif);font-weight:500;letter-spacing:-0.02em;
+    font-size:clamp(1.9rem,4.5vw,2.7rem);line-height:1.1;margin:0 0 8px;text-align:center}
+  .scene .sub{font-size:12px;color:var(--g600);margin:0 0 30px;text-align:center}
+  .scene canvas{width:min(760px,100%);height:auto;display:block;flex-shrink:0}
+  .scene .repo{margin-top:26px;font-size:12px}
+  .scene .repo a{color:var(--g600)}
+  .scene .repo a:hover{color:var(--accent)}
+  .intro-text{font-family:var(--serif);font-size:clamp(1.3rem,3vw,1.7rem);
+    line-height:1.45;max-width:34em;text-align:center;margin:0}
+  .intro-text .w{opacity:.12;transition:opacity .3s ease}
+  .intro-text .w.on{opacity:1}
+  .typed{margin-top:26px;font-size:12.5px;color:var(--g600);min-height:1.4em}
+  .typed .cursor{display:inline-block;width:7px;height:13px;background:var(--ink);
+    vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
 
-  @media (max-width:560px){
-    main{padding:52px 0 8px}
-    nav{gap:14px}
+  @media (prefers-reduced-motion:reduce){
+    .scene,.intro-text .w{transition:none}
+    .typed .cursor{animation:none}
+  }
+
+  @media (max-width:640px){
+    .caption{display:none}
+    .wordmark{font-size:22px}
+    .links{top:auto;bottom:24px;right:24px}
+    .hint{display:none}
   }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-
-  <header>
-    <nav>
-      <a class="name" href="#top">Shash Bhatia</a>
-      <a href="#work">Work</a>
-      <a href="#writing">Writing</a>
-      <a href="#contact">Contact</a>
-    </nav>
-  </header>
-
-  <main id="top">
-    <h1>Shash Bhatia</h1>
-    <p>
-      I'm a software engineer at General Motors. I build closed-loop validation
-      pipelines and curvature tracking algorithms for autonomous driving systems.
-    </p>
-    <p>
-      I also write open-source tools where AI meets systems. My work is
-      converging on AI evaluation and auditing: the harnesses and
-      infrastructure that show what AI systems actually do. I aim to work as a
-      research engineer on problems with clear human stakes.
-    </p>
-    <p id="work">
-      Code: <a href="https://github.com/bhatiashash/FirstFocus">FirstFocus</a>,
-      a native Mac app that builds one ranked list of what needs your attention
-      from your Reminders and Messages, using a local language model.
-    </p>
-    <p id="writing" class="dim">
-      Writing: notes on evals, agents, and tooling. Coming soon.
-    </p>
-
-    <hr class="rule">
-
-    <p id="contact" class="links">
-      <a href="https://github.com/bhatiashash">GitHub</a><a href="https://www.linkedin.com/in/shashwat-bhatia/">LinkedIn</a>
-    </p>
-  </main>
-
-  <footer>
-    <!-- The one quirk: a visible last-updated stamp. -->
-    <p>Last updated October 2026.</p>
-  </footer>
-
+<a class="wordmark" href="#intro">Shash Bhatia</a>
+<div class="links">
+  <a href="https://github.com/bhatiashash">GitHub</a><a href="https://www.linkedin.com/in/shashwat-bhatia/">LinkedIn</a>
 </div>
 
+<main id="stage"></main>
+
+<div class="caption" id="caption"></div>
+<nav class="index" id="index" aria-label="Projects"></nav>
+<div class="hint">[&larr;] [&rarr;] or [1]-[4] to switch</div>
+
+<script>
+'use strict';
+/* Stage engine, after yashdagade.com: one scene at a time, vanilla JS.
+   Rule: motion must carry information. Calm, precise, continuous. */
+const Site = {
+  colors:{ bg:'#ffffff', ink:'#000000', ink75:'rgba(0,0,0,.75)',
+    g200:'#eeeeee', g300:'#dddddd', g400:'#cccccc', g500:'#999999', g600:'#666666',
+    accent:'#002FA7', accentSoft:'rgba(0,47,167,.10)' },
+  fonts:{ serif:"'Newsreader',Georgia,serif", mono:"'Geist Mono',ui-monospace,Menlo,monospace" },
+  reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  scenes:[], current:-1,
+  register(def){ this.scenes.push(def); },
+  boot(){
+    const stage=document.getElementById('stage');
+    const index=document.getElementById('index');
+    this.scenes.forEach((s,i)=>{
+      const el=document.createElement('section');
+      el.className='scene'; el.id='scene-'+s.id; el.inert=true;
+      el.setAttribute('aria-hidden','true');
+      el.innerHTML='<h1></h1><p class="sub"></p>';
+      el.querySelector('h1').textContent=s.title;
+      el.querySelector('.sub').textContent=s.sub||'';
+      stage.appendChild(el); s.el=el;
+      const b=document.createElement('button');
+      b.textContent='['+(i+1)+']'; b.setAttribute('aria-label',s.title);
+      b.addEventListener('click',()=>this.show(i));
+      index.appendChild(b); s.btn=b;
+      if(s.repo){
+        const p=document.createElement('p'); p.className='repo';
+        const a=document.createElement('a'); a.href=s.repo; a.textContent=s.repo.replace('https://','');
+        p.appendChild(a); el.appendChild(p);
+      }
+    });
+    const start=Math.max(0,this.scenes.findIndex(s=>'#'+s.id===location.hash));
+    this.show(start);
+    window.addEventListener('keydown',e=>{
+      if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.target.closest('input,textarea,select,[contenteditable]')) return;
+      if(e.key>='1'&&e.key<=''+this.scenes.length){ e.preventDefault(); this.show(+e.key-1); }
+      else if(e.key==='ArrowRight'){ e.preventDefault(); this.show((this.current+1)%this.scenes.length); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); this.show((this.current-1+this.scenes.length)%this.scenes.length); }
+    });
+    window.addEventListener('hashchange',()=>{
+      const i=this.scenes.findIndex(s=>'#'+s.id===location.hash);
+      if(i>=0&&i!==this.current) this.show(i);
+    });
+  },
+  show(i){
+    if(i===this.current) return;
+    const prev=this.scenes[this.current];
+    if(prev){ prev.el.classList.remove('active'); prev.btn.textContent='['+(this.current+1)+']';
+      if(prev.el.contains(document.activeElement)) this.scenes[i].btn.focus();
+      prev.el.inert=true; prev.el.setAttribute('aria-hidden','true'); prev.btn.removeAttribute('aria-current');
+      if(prev.hooks&&prev.hooks.exit) prev.hooks.exit(); }
+    this.current=i;
+    const s=this.scenes[i];
+    s.el.classList.add('active'); s.btn.textContent='[ ]'; s.btn.classList.add('active');
+    s.el.inert=false; s.el.setAttribute('aria-hidden','false'); s.btn.setAttribute('aria-current','true');
+    this.scenes.forEach((o,j)=>{ if(j!==i) o.btn.classList.remove('active'); });
+    document.getElementById('caption').textContent=s.caption||'';
+    history.replaceState(null,'','#'+s.id);
+    if(!s.hooks){ s.hooks=s.create(s.el)||{}; }
+    if(s.hooks.enter) s.hooks.enter();
+  },
+  /* HiDPI canvas that fills a fixed design box (W x H CSS px). */
+  canvas(parent,W,H){
+    const c=document.createElement('canvas');
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    c.width=W*dpr; c.height=H*dpr; c.style.aspectRatio=W+'/'+H;
+    const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+    c.setAttribute('role','img');
+    c.setAttribute('aria-label',this.scenes[this.current].caption);
+    parent.insertBefore(c,parent.querySelector('.repo'));
+    return { canvas:c, ctx, W, H };
+  },
+  /* Frame loop that only runs while fn returns true and scene is active. */
+  loop(owner,fn){
+    let raf=0, last=performance.now(), t=0, alive=true;
+    const step=(now)=>{
+      if(!alive) return;
+      const dt=Math.min(.05,(now-last)/1000); last=now; t+=dt;
+      if(fn(t,dt)===false){ alive=false; return; }
+      raf=requestAnimationFrame(step);
+    };
+    raf=requestAnimationFrame(step);
+    return ()=>{ alive=false; cancelAnimationFrame(raf); };
+  },
+  ease(t){ return 1-Math.pow(1-t,3); },          /* calm cubic, no bounce */
+  clamp01(v){ return Math.max(0,Math.min(1,v)); }
+};
+</script>
+
+<script>
+'use strict';
+/* Scene 1: intro. The headline reads itself, word by word; the role line types. */
+Site.register({
+  id:'intro', title:'Shash Bhatia', sub:'',
+  caption:'Software engineer.\nNow: AI evaluation and auditing.',
+  create(el){
+    el.querySelector('h1').style.display='none';
+    el.querySelector('.sub').style.display='none';
+    const p=document.createElement('p'); p.className='intro-text';
+    const text='I build closed-loop validation pipelines for autonomous driving, and open-source tools where AI meets systems. My work is converging on AI evaluation and auditing: the harnesses that show what AI systems actually do.';
+    text.split(' ').forEach((w,i,arr)=>{
+      const s=document.createElement('span'); s.className='w'; s.textContent=w;
+      p.appendChild(s); if(i<arr.length-1) p.appendChild(document.createTextNode(' '));
+    });
+    el.appendChild(p);
+    const t=document.createElement('div'); t.className='typed';
+    t.innerHTML='<span class="txt"></span><span class="cursor"></span>';
+    el.appendChild(t);
+    const words=p.querySelectorAll('.w'), txt=t.querySelector('.txt');
+    const line='software engineer · ai evaluation and auditing';
+    let stop=null;
+    return { enter(){
+      words.forEach(w=>w.classList.remove('on')); txt.textContent='';
+      if(Site.reduced){ words.forEach(w=>w.classList.add('on')); txt.textContent=line; return; }
+      stop=Site.loop(this,(tt)=>{
+        const wi=Math.floor(tt/0.09);
+        words.forEach((w,j)=>w.classList.toggle('on',j<wi));
+        const ci=Math.max(0,Math.floor((tt-words.length*0.09-0.3)/0.045));
+        txt.textContent=line.slice(0,ci);
+        if(wi>=words.length&&ci>=line.length) return false;
+      });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+
+/* Scene 2: FirstFocus. A task list that keeps re-ranking itself.
+   The top item is the thing that matters, so it gets the accent. */
+Site.register({
+  id:'firstfocus', title:'FirstFocus', sub:'macOS · on-device language models · open source',
+  repo:'https://github.com/bhatiashash/FirstFocus',
+  caption:'One ranked list of what needs your attention.\nLocal model triages Reminders and Messages.\nNothing leaves the machine. Began as DailyOS.',
+  create(el){
+    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const C=Site.colors, F=Site.fonts;
+    const tasks=[
+      { label:'Reply to the recruiter about Thursday', base:.93 },
+      { label:'Fix the flaky curvature test', base:.81 },
+      { label:'Review Priyantha\u2019s simulation results', base:.72 },
+      { label:'Book flights for the canyon trip', base:.55 },
+      { label:'Renew the gym membership', base:.31 },
+      { label:'Water the plants', base:.12 }
+    ];
+    const rowH=52, top=34;
+    let rows=tasks.map((task,index)=>({ ...task, y:top+index*rowH, score:task.base, targetScore:task.base }));
+    let stop=null, cycle=0;
+    function draw(t){
+      ctx.clearRect(0,0,W,H);
+      ctx.font='12px '+F.mono; ctx.fillStyle=C.g600;
+      ctx.fillText('attention, ranked', 8, 16);
+      rows.forEach((r,i)=>{
+        const y=r.y;
+        ctx.strokeStyle=C.g200; ctx.beginPath(); ctx.moveTo(8,y+rowH-10); ctx.lineTo(W-8,y+rowH-10); ctx.stroke();
+        ctx.font='13.5px '+F.mono; ctx.fillStyle= i===0? C.ink : C.ink75;
+        ctx.fillText(r.label, 8, y+24);
+        /* score bar: length is the score, drawn not snapped */
+        const bw=(W-220)*r.score;
+        ctx.fillStyle= i===0? C.accent : C.g400;
+        ctx.fillRect(8, y+32, Math.max(2,bw), 2);
+        ctx.font='12px '+F.mono; ctx.fillStyle= i===0? C.accent : C.g600;
+        ctx.fillText(r.score.toFixed(2), W-52, y+24);
+        if(i===0){ ctx.fillStyle=C.accent; ctx.fillText('+', W-76, y+24); }
+      });
+    }
+    function retarget(){
+      cycle++;
+      rows.forEach(row=>{ row.from=row.y; row.scoreFrom=row.score;
+        row.targetScore=Math.max(.05,Math.min(.98, row.base + Math.sin(cycle*1.7+row.base*20)*.09 )); });
+      const sorted=[...rows].sort((first,second)=>second.targetScore-first.targetScore);
+      sorted.forEach((r,i)=>{ r.to=top+i*rowH; });
+      rows=sorted;
+    }
+    return { enter(){
+      if(Site.reduced){ rows.forEach((row,index)=>{ row.y=top+index*rowH; row.score=row.targetScore; }); draw(0); return; }
+      let phase=0, pt=0;
+      stop=Site.loop(this,(t,dt)=>{
+        pt+=dt;
+        if(phase===0){ /* hold */
+          rows.forEach(r=>{ r.y+= ((r.to??r.y)-r.y)*Math.min(1,dt*5); });
+          draw(t);
+          if(pt>2.4){ retarget(); phase=1; pt=0; }
+        } else { /* ease to new order + scores */
+          const k=Site.ease(Site.clamp01(pt/1.1));
+          rows.forEach(row=>{ row.y=row.from+(row.to-row.from)*k; row.score=row.scoreFrom+(row.targetScore-row.scoreFrom)*k; });
+          draw(t);
+          if(pt>=1.1){ phase=0; pt=0; }
+        }
+      });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+
+/* Scene 3: Monitor recruitment. Same logs, two framings.
+   Bars draw on; the recruited framing loses recall for two of three monitors. */
+Site.register({
+  id:'monitors', title:'Monitor recruitment', sub:'Apart Research AI Collusion Sprint · Oct 2026',
+  repo:'https://github.com/bhatiashash/monitor-recruitment',
+  caption:'One frozen set of game logs, rescored under\ntwo framings. Two of three monitors caught\nless when the deceiver was framed as recruited.',
+  create(el){
+    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const C=Site.colors, F=Site.fonts;
+    const data=[
+      { name:'Qwen2.5-14B', unit:'recall', a:.918, b:.846 },
+      { name:'Claude Haiku 4.5', unit:'lies caught / 100', a:.77, b:.63 },
+      { name:'GPT-5 mini', unit:'detection score', a:.245, b:.354 }
+    ];
+    const x0=190, x1=W-120, top=56, groupH=104;
+    function draw(p){
+      ctx.clearRect(0,0,W,H);
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.g600;
+      ctx.fillText('baseline framing', x0, 22);
+      ctx.fillStyle=C.accent; ctx.fillText('recruited framing', x0+130, 22);
+      ctx.strokeStyle=C.g300; ctx.setLineDash([3,4]);
+      const zeroX=x0; ctx.beginPath(); ctx.moveTo(zeroX,36); ctx.lineTo(zeroX,H-16); ctx.stroke(); ctx.setLineDash([]);
+      data.forEach((d,i)=>{
+        const y=top+i*groupH;
+        ctx.font='13px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText(d.name, 8, y+16);
+        ctx.font='11px '+F.mono; ctx.fillStyle=C.g500;
+        ctx.fillText(d.unit, 8, y+34);
+        /* baseline bar: gray. recruited bar: accent. length carries the value. */
+        const wA=(x1-x0)*d.a*p, wB=(x1-x0)*d.b*p;
+        ctx.fillStyle=C.g400; ctx.fillRect(x0, y+2, wA, 7);
+        ctx.fillStyle=C.accent; ctx.fillRect(x0, y+22, wB, 7);
+        ctx.font='12.5px '+F.mono;
+        ctx.fillStyle=C.g600; ctx.fillText(d.unit==='lies caught / 100'? String(Math.round(d.a*p*100)) : (d.a*p).toFixed(3), x1+14, y+10);
+        ctx.fillStyle=C.accent; ctx.fillText(d.unit==='lies caught / 100'? String(Math.round(d.b*p*100)) : (d.b*p).toFixed(3), x1+14, y+30);
+        if(d.b>d.a){ ctx.fillStyle=C.g600; ctx.font='11px '+F.mono;
+          ctx.fillText('moved the other way', x0, y+52); }
+      });
+    }
+    let stop=null;
+    return { enter(){
+      if(Site.reduced){ draw(1); return; }
+      stop=Site.loop(this,t=>{ const p=Site.ease(Site.clamp01(t/1.6)); draw(p); if(p>=1) return false; });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+</script>
+
+<script>
+'use strict';
+/* Scene 4: The one-bit gate. One bit per episode travels the coalition;
+   the effect chart draws its intervals honestly across zero. */
+Site.register({
+  id:'onebit', title:'The one-bit gate', sub:'Apart Research AI Collusion Sprint · Track 3.1 · Oct 2026',
+  repo:'https://github.com/bhatiashash/one-bit-collusion-gate',
+  caption:'Effect of one bit vs silence, with intervals.\nBoth include zero: verdict inconclusive.\nThe gate held in all 220 audited games.',
+  create(el){
+    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const C=Site.colors, F=Site.fonts;
+    /* left: coalition dots + travelling bit. right: interval chart. */
+    const agents=[{x:110,y:110},{x:110,y:210},{x:110,y:310}];
+    const lo=-7, hi=7, cx0=330, cx1=W-70;
+    const X=v=> cx0 + (v-lo)/(hi-lo)*(cx1-cx0);
+    const effects=[ { label:'7B · 30 games / arm', est:.49, a:-3.67, b:4.98, y:150 },
+                    { label:'14B · 20 games / arm', est:.81, a:-5.36, b:6.38, y:250 } ];
+    function draw(t, p){
+      ctx.clearRect(0,0,W,H);
+      /* agents */
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.g600; ctx.fillText('coalition', 62, 66);
+      agents.forEach((a,i)=>{
+        ctx.strokeStyle=C.g400; ctx.beginPath(); ctx.arc(a.x,a.y,17,0,Math.PI*2); ctx.stroke();
+        ctx.fillStyle=C.ink; ctx.font='12px '+F.mono; ctx.fillText('A'+(i+1), a.x-9, a.y+4);
+      });
+      ctx.strokeStyle=C.g300; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(agents[0].x,agents[0].y); ctx.lineTo(agents[2].x,agents[2].y); ctx.stroke(); ctx.setLineDash([]);
+      /* the bit: one square, travelling down the coalition, once per episode */
+      const cyc=(t%3.2)/3.2, seg=Math.min(2,Math.floor(cyc*3)), f=(cyc*3)-seg;
+      const from=agents[seg], to=agents[seg+1]||agents[0];
+      const bx=from.x, by=from.y+(to.y-from.y)*Site.ease(f);
+      ctx.fillStyle=C.accent; ctx.fillRect(bx-5,by-5,10,10);
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.accent;
+      ctx.fillText('1 bit', bx+14, by+4);
+      ctx.fillStyle=C.g600; ctx.fillText('episode '+String(1+Math.floor(t/3.2)).padStart(2,'0'), 62, 356);
+      /* chart */
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.g600;
+      ctx.fillText('score gain over silence (points)', cx0, 66);
+      ctx.strokeStyle=C.g400; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(X(0),96); ctx.lineTo(X(0),330); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=C.g500; ctx.fillText('0', X(0)-3, 348);
+      effects.forEach(e=>{
+        ctx.font='12px '+F.mono; ctx.fillStyle=C.ink; ctx.fillText(e.label, cx0, e.y-26);
+        const xe=X(e.est), xbb=X(e.a+(e.b-e.a)*p);
+        ctx.strokeStyle=C.g400; ctx.beginPath(); ctx.moveTo(X(e.a),e.y); ctx.lineTo(xbb,e.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(X(e.a),e.y-6); ctx.lineTo(X(e.a),e.y+6);
+        ctx.moveTo(xbb,e.y-6); ctx.lineTo(xbb,e.y+6); ctx.stroke();
+        ctx.fillStyle=C.accent; ctx.beginPath(); ctx.arc(xe,e.y,4.5,0,Math.PI*2); ctx.fill();
+        ctx.font='12.5px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText('+'+e.est.toFixed(2), xe+12, e.y+4);
+        ctx.font='11px '+F.mono; ctx.fillStyle=C.g500;
+        ctx.fillText('['+e.a.toFixed(2)+', +'+e.b.toFixed(2)+']', cx0, e.y+24);
+      });
+    }
+    let stop=null;
+    return { enter(){
+      if(Site.reduced){ draw(99,1); return; }
+      stop=Site.loop(this,t=>{ draw(t, Site.ease(Site.clamp01(t/1.4))); });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+
+Site.boot();
+</script>
 </body>
 </html>
