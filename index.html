@@ -52,7 +52,7 @@
   .scene .repo{margin-top:26px;font-size:12px}
   .scene .repo a{color:var(--g600)}
   .scene .repo a:hover{color:var(--accent)}
-  #scene-firstfocus .sub{margin-bottom:16px}
+  .scene.project .sub{margin-bottom:16px}
   .project-overview{width:min(760px,100%);margin-bottom:24px;flex-shrink:0}
   .project-lede{font-family:var(--serif);font-size:clamp(1.2rem,2.5vw,1.4rem);
     line-height:1.4;max-width:32em;margin:0 auto 20px;text-align:center}
@@ -161,6 +161,30 @@ const Site = {
     if(!s.hooks){ s.hooks=s.create(s.el)||{}; }
     if(s.hooks.enter) s.hooks.enter();
   },
+  project(parent,{lede,facts,linkLabel,note,canvasLabel}){
+    parent.classList.add('project');
+    const overview=document.createElement('div'); overview.className='project-overview';
+    const introduction=document.createElement('p'); introduction.className='project-lede';
+    introduction.textContent=lede; overview.appendChild(introduction);
+    const details=document.createElement('dl'); details.className='project-facts';
+    facts.forEach(fact=>{
+      const item=document.createElement('div');
+      const title=document.createElement('dt'); title.textContent=fact.title;
+      const detail=document.createElement('dd'); detail.textContent=fact.detail;
+      item.append(title,detail); details.appendChild(item);
+    });
+    overview.appendChild(details);
+    const repo=parent.querySelector('.repo');
+    parent.insertBefore(overview,repo);
+    repo.querySelector('a').textContent=linkLabel;
+    const drawing=this.canvas(parent,760,400);
+    const explanation=document.createElement('p'); explanation.className='demo-note';
+    explanation.id=parent.id+'-demo-note'; explanation.textContent=note;
+    parent.insertBefore(explanation,repo);
+    drawing.canvas.setAttribute('aria-label',canvasLabel);
+    drawing.canvas.setAttribute('aria-describedby',explanation.id);
+    return drawing;
+  },
   /* HiDPI canvas that fills a fixed design box (W x H CSS px). */
   canvas(parent,W,H){
     const c=document.createElement('canvas');
@@ -232,31 +256,17 @@ Site.register({
   repo:'https://github.com/bhatiashash/FirstFocus',
   caption:'One ranked list of what needs your attention.\nLocal model triages Reminders and Messages.\nNothing leaves the machine. Began as DailyOS.',
   create(el){
-    const overview=document.createElement('div'); overview.className='project-overview';
-    const lede=document.createElement('p'); lede.className='project-lede';
-    lede.textContent='FirstFocus is an open-source Mac app that brings Apple Reminders and Messages together, then uses a local language model to rank what needs your attention.';
-    overview.appendChild(lede);
-    const facts=document.createElement('dl'); facts.className='project-facts';
-    [
-      { title:'Bring it together', detail:'Your reminders and messages in one place, instead of two apps to check.' },
-      { title:'Find your next step', detail:'One prioritized list helps you decide what to focus on first.' },
-      { title:'Keep it on your Mac', detail:'The language model runs on your device. Nothing leaves the machine.' }
-    ].forEach(fact=>{
-      const item=document.createElement('div');
-      const title=document.createElement('dt'); title.textContent=fact.title;
-      const detail=document.createElement('dd'); detail.textContent=fact.detail;
-      item.append(title,detail); facts.appendChild(item);
+    const { ctx, W, H } = Site.project(el,{
+      lede:'FirstFocus is an open-source Mac app that brings Apple Reminders and Messages together, then uses a local language model to rank what needs your attention.',
+      facts:[
+        { title:'Bring it together', detail:'Your reminders and messages in one place, instead of two apps to check.' },
+        { title:'Find your next step', detail:'One prioritized list helps you decide what to focus on first.' },
+        { title:'Keep it on your Mac', detail:'The language model runs on your device. Nothing leaves the machine.' }
+      ],
+      linkLabel:'Explore FirstFocus on GitHub →',
+      note:'Illustrative demo with sample tasks and priority scores. As priorities change, the list reorders; blue marks the top item.',
+      canvasLabel:'Example of FirstFocus ranking tasks by priority, with the top task highlighted in blue.'
     });
-    overview.appendChild(facts);
-    const repo=el.querySelector('.repo');
-    el.insertBefore(overview,repo);
-    repo.querySelector('a').textContent='Explore FirstFocus on GitHub →';
-    const { canvas, ctx, W, H } = Site.canvas(el, 760, 400);
-    const note=document.createElement('p'); note.className='demo-note'; note.id='firstfocus-demo-note';
-    note.textContent='Illustrative demo with sample tasks and priority scores. As priorities change, the list reorders; blue marks the top item.';
-    el.insertBefore(note,repo);
-    canvas.setAttribute('aria-label','Example of FirstFocus ranking tasks by priority, with the top task highlighted in blue.');
-    canvas.setAttribute('aria-describedby',note.id);
     const C=Site.colors, F=Site.fonts;
     const tasks=[
       { label:'Reply to the recruiter about Thursday', base:.93 },
@@ -315,26 +325,34 @@ Site.register({
   }
 });
 
-/* Scene 3: Monitor recruitment. Same logs, two framings.
-   Bars draw on; the recruited framing loses recall for two of three monitors. */
 Site.register({
   id:'monitors', title:'Monitor recruitment', sub:'Apart Research AI Collusion Sprint · Oct 2026',
   repo:'https://github.com/bhatiashash/monitor-recruitment',
-  caption:'One frozen set of game logs, rescored under\ntwo framings. Two of three monitors caught\nless when the deceiver was framed as recruited.',
+  caption:'Agents know they are being monitored.\nInviting them to address the monitor lowered\ndetection for two monitors, but raised it for one.',
   create(el){
-    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const { ctx, W, H } = Site.project(el,{
+      lede:'Can inviting AI agents to address their safety monitor change how well deception is detected? A monitor is another AI model reviewing what the agents say and do.',
+      facts:[
+        { title:'The setup', detail:'Two AI agents play repeated trust games, with no disclosed oversight, a named monitor, or an invitation to address it.' },
+        { title:'What I tested', detail:'I scored recorded games with three AI monitors, each using its own calibrated detection threshold.' },
+        { title:'What I found', detail:'After the invitation, two monitors detected less deception; one detected more. Lower detection alone does not prove collusion.' }
+      ],
+      linkLabel:'Read the monitor experiment and results →',
+      note:'Gray: agents know a monitor is watching. Blue: they are also invited to address it. Percentages show deception detected; higher means more caught. Compare colors within each monitor, not across models.',
+      canvasLabel:'Deception detected before and after an invitation to address the monitor: Qwen, 91.8% to 84.6%; Haiku, 75.5% to 63.1%; GPT-5 mini, 24.5% to 35.4%.'
+    });
     const C=Site.colors, F=Site.fonts;
     const data=[
-      { name:'Qwen2.5-14B', unit:'recall', a:.918, b:.846 },
-      { name:'Claude Haiku 4.5', unit:'lies caught / 100', a:.77, b:.63 },
-      { name:'GPT-5 mini', unit:'detection score', a:.245, b:.354 }
+      { name:'Qwen2.5-14B', a:.918, b:.846 },
+      { name:'Claude Haiku 4.5', a:.755, b:.631 },
+      { name:'GPT-5 mini', a:.245, b:.354 }
     ];
     const x0=190, x1=W-120, top=56, groupH=104;
     function draw(p){
       ctx.clearRect(0,0,W,H);
       ctx.font='11px '+F.mono; ctx.fillStyle=C.g600;
-      ctx.fillText('baseline framing', x0, 22);
-      ctx.fillStyle=C.accent; ctx.fillText('recruited framing', x0+130, 22);
+      ctx.fillText('oversight disclosed', x0, 22);
+      ctx.fillStyle=C.accent; ctx.fillText('invited to address monitor', x0+130, 22);
       ctx.strokeStyle=C.g300; ctx.setLineDash([3,4]);
       const zeroX=x0; ctx.beginPath(); ctx.moveTo(zeroX,36); ctx.lineTo(zeroX,H-16); ctx.stroke(); ctx.setLineDash([]);
       data.forEach((d,i)=>{
@@ -342,14 +360,14 @@ Site.register({
         ctx.font='13px '+F.mono; ctx.fillStyle=C.ink;
         ctx.fillText(d.name, 8, y+16);
         ctx.font='11px '+F.mono; ctx.fillStyle=C.g500;
-        ctx.fillText(d.unit, 8, y+34);
+        ctx.fillText('deception detected', 8, y+34);
         /* baseline bar: gray. recruited bar: accent. length carries the value. */
         const wA=(x1-x0)*d.a*p, wB=(x1-x0)*d.b*p;
         ctx.fillStyle=C.g400; ctx.fillRect(x0, y+2, wA, 7);
         ctx.fillStyle=C.accent; ctx.fillRect(x0, y+22, wB, 7);
         ctx.font='12.5px '+F.mono;
-        ctx.fillStyle=C.g600; ctx.fillText(d.unit==='lies caught / 100'? String(Math.round(d.a*p*100)) : (d.a*p).toFixed(3), x1+14, y+10);
-        ctx.fillStyle=C.accent; ctx.fillText(d.unit==='lies caught / 100'? String(Math.round(d.b*p*100)) : (d.b*p).toFixed(3), x1+14, y+30);
+        ctx.fillStyle=C.g600; ctx.fillText((d.a*p*100).toFixed(1)+'%', x1+14, y+10);
+        ctx.fillStyle=C.accent; ctx.fillText((d.b*p*100).toFixed(1)+'%', x1+14, y+30);
         if(d.b>d.a){ ctx.fillStyle=C.g600; ctx.font='11px '+F.mono;
           ctx.fillText('moved the other way', x0, y+52); }
       });
@@ -370,16 +388,26 @@ Site.register({
 Site.register({
   id:'onebit', title:'The one-bit gate', sub:'Apart Research AI Collusion Sprint · Track 3.1 · Oct 2026',
   repo:'https://github.com/bhatiashash/one-bit-collusion-gate',
-  caption:'Effect of one bit vs silence, with intervals.\nBoth include zero: verdict inconclusive.\nThe gate held in all 220 audited games.',
+  caption:'One shared bit compared with no message.\nNeither interval rules out zero advantage.\nThe limit held in all 280 audited runs.',
   create(el){
-    const { ctx, W, H } = Site.canvas(el, 760, 400);
+    const { ctx, W, H } = Site.project(el,{
+      lede:'Can AI agents coordinate with just one yes-or-no message? I built a code-enforced communication limit to test whether a group of agents could gain an advantage with only one shared bit per game.',
+      facts:[
+        { title:'The setup', detail:'AI agents form a coalition—a group working together—in a simulated task-allocation game.' },
+        { title:'What I tested', detail:'Compare one bit (0 or 1) with no message, a shuffled bit, and unrestricted communication.' },
+        { title:'What I found', detail:'The main comparison with silence was inconclusive. The one-bit limit held in all 280 audited runs.' }
+      ],
+      linkLabel:'Read the one-bit experiment and results →',
+      note:'The moving square illustrates the allowed bit, not a replay of messages. Dots show score gains over silence for two model sizes; lines show 95% uncertainty intervals. Both cross zero, so neither establishes an advantage.',
+      canvasLabel:'Score gain from one bit versus silence: 7B, +0.49 points with a 95% interval from −3.67 to +4.98; 14B, +0.81 points with an interval from −5.36 to +6.38. Both include zero.'
+    });
     const C=Site.colors, F=Site.fonts;
     /* left: coalition dots + travelling bit. right: interval chart. */
     const agents=[{x:110,y:110},{x:110,y:210},{x:110,y:310}];
     const lo=-7, hi=7, cx0=330, cx1=W-70;
     const X=v=> cx0 + (v-lo)/(hi-lo)*(cx1-cx0);
-    const effects=[ { label:'7B · 30 games / arm', est:.49, a:-3.67, b:4.98, y:150 },
-                    { label:'14B · 20 games / arm', est:.81, a:-5.36, b:6.38, y:250 } ];
+    const effects=[ { label:'7B · 30 games / condition', est:.49, a:-3.67, b:4.98, y:150 },
+                    { label:'14B · 20 games / condition', est:.81, a:-5.36, b:6.38, y:250 } ];
     function draw(t, p){
       ctx.clearRect(0,0,W,H);
       /* agents */
