@@ -42,7 +42,7 @@
   /* Stage: one scene at a time, crossfade only. */
   #stage{position:fixed;inset:0}
   .scene{position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:safe center;padding:90px 24px 110px;overflow-y:auto;
+    align-items:center;justify-content:safe center;padding:90px 24px 140px;overflow-y:auto;
     opacity:0;pointer-events:none;transition:opacity .45s ease}
   .scene.active{opacity:1;pointer-events:auto}
   .scene h1{font-family:var(--serif);font-weight:500;letter-spacing:-0.02em;
@@ -52,6 +52,7 @@
   .scene .repo{margin-top:26px;font-size:12px}
   .scene .repo a{color:var(--g600)}
   .scene .repo a:hover{color:var(--accent)}
+  .scene-takeaway{display:none}
   .scene.project .sub{margin-bottom:16px}
   .project-overview{width:min(760px,100%);margin-bottom:24px;flex-shrink:0}
   .project-lede{font-family:var(--serif);font-size:clamp(1.2rem,2.5vw,1.4rem);
@@ -71,6 +72,15 @@
     vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
   @keyframes blink{50%{opacity:0}}
 
+  .static-portfolio{max-width:760px;margin:0 auto;padding:36px 24px 64px;
+    font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+  .static-portfolio h1,.static-portfolio h2{font-family:var(--serif);font-weight:500;
+    line-height:1.2;letter-spacing:-0.02em}
+  .static-portfolio h1{font-size:32px}
+  .static-portfolio h2{font-size:26px}
+  .static-portfolio section+section{margin-top:32px;padding-top:24px;border-top:1px solid var(--g300)}
+  .static-portfolio a{color:var(--accent)}
+
   @media (prefers-reduced-motion:reduce){
     .scene,.intro-text .w{transition:none}
     .typed .cursor{animation:none}
@@ -78,12 +88,27 @@
 
   @media (max-width:640px){
     .caption{display:none}
+    .scene{top:70px;bottom:64px;padding:20px 24px 46px}
+    .scene-takeaway{display:block;width:min(760px,100%);margin:24px 0 0;
+      font-size:11px;line-height:1.5;color:var(--g600);white-space:pre-line;
+      text-align:center;flex-shrink:0}
     .wordmark{font-size:22px}
     .links{top:auto;bottom:24px;right:24px}
     .hint{display:none}
     .project-facts{grid-template-columns:1fr;gap:12px}
   }
 </style>
+<noscript>
+  <style>
+    html,body{height:auto}
+    body{overflow:auto}
+    #stage{position:static}
+    .wordmark{position:static;display:block;transform:none;margin:22px 24px 0;text-align:center}
+    .links{position:static;margin:18px 24px 0;text-align:center}
+    .links a{margin:0 8px}
+    .caption,.index,.hint{display:none}
+  </style>
+</noscript>
 </head>
 <body>
 
@@ -92,7 +117,36 @@
   <a href="https://github.com/bhatiashash">GitHub</a><a href="https://www.linkedin.com/in/shashwat-bhatia/">LinkedIn</a>
 </div>
 
-<main id="stage"></main>
+<main id="stage">
+  <noscript>
+    <div class="static-portfolio">
+      <section id="intro" aria-labelledby="static-intro-title">
+        <h1 id="static-intro-title">Shash Bhatia</h1>
+        <p>Software engineer. Now: AI evaluation and auditing.</p>
+        <p>I build closed-loop validation pipelines for autonomous driving, and open-source tools where AI meets systems. My work is converging on AI evaluation and auditing: the harnesses that show what AI systems actually do.</p>
+      </section>
+      <section id="firstfocus" aria-labelledby="static-firstfocus-title">
+        <h2 id="static-firstfocus-title">FirstFocus</h2>
+        <p>FirstFocus is an open-source Mac app that brings Apple Reminders and Messages together, then uses a local language model to rank what needs your attention.</p>
+        <p>One ranked list helps you decide what to focus on next. The model runs on your Mac. Nothing leaves the machine. Began as DailyOS.</p>
+        <p><a href="https://github.com/bhatiashash/FirstFocus">Explore FirstFocus on GitHub</a></p>
+      </section>
+      <section id="monitors" aria-labelledby="static-monitors-title">
+        <h2 id="static-monitors-title">Monitor recruitment</h2>
+        <p>Can inviting AI agents to address their safety monitor change how well deception is detected? A monitor is another AI model reviewing what the agents say and do.</p>
+        <p>I scored recorded trust games with three monitors, each using its own calibrated detection threshold. After the invitation, two monitors detected less deception; one detected more. Lower detection alone does not prove collusion.</p>
+        <p><a href="https://github.com/bhatiashash/monitor-recruitment">Read the monitor experiment and results</a></p>
+      </section>
+      <section id="onebit" aria-labelledby="static-onebit-title">
+        <h2 id="static-onebit-title">The one-bit gate</h2>
+        <p>Can AI agents coordinate with just one yes-or-no message? I built a code-enforced communication limit to test whether a group of agents could gain an advantage with only one shared bit per game.</p>
+        <p>The main comparison with silence was inconclusive. Both uncertainty intervals include zero, so neither establishes an advantage.</p>
+        <p>The one-bit limit held in all 280 audited evaluation runs: 220 before the GPT-5 mini extension and 60 more in that extension.</p>
+        <p><a href="https://github.com/bhatiashash/one-bit-collusion-gate">Read the one-bit experiment and results</a></p>
+      </section>
+    </div>
+  </noscript>
+</main>
 
 <div class="caption" id="caption"></div>
 <nav class="index" id="index" aria-label="Projects"></nav>
@@ -158,7 +212,11 @@ const Site = {
     this.scenes.forEach((o,j)=>{ if(j!==i) o.btn.classList.remove('active'); });
     document.getElementById('caption').textContent=s.caption||'';
     history.replaceState(null,'','#'+s.id);
-    if(!s.hooks){ s.hooks=s.create(s.el)||{}; }
+    if(!s.hooks){
+      s.hooks=s.create(s.el)||{};
+      const takeaway=document.createElement('p'); takeaway.className='scene-takeaway';
+      takeaway.textContent=s.caption||''; s.el.appendChild(takeaway);
+    }
     if(s.hooks.enter) s.hooks.enter();
   },
   project(parent,{lede,facts,linkLabel,note,canvasLabel}){
@@ -388,14 +446,14 @@ Site.register({
 Site.register({
   id:'onebit', title:'The one-bit gate', sub:'Apart Research AI Collusion Sprint · Track 3.1 · Oct 2026',
   repo:'https://github.com/bhatiashash/one-bit-collusion-gate',
-  caption:'One shared bit compared with no message.\nNeither interval rules out zero advantage.\nThe limit held in all 280 audited runs.',
+  caption:'One shared bit compared with no message.\nNeither interval rules out zero advantage.\nThe limit held in all 280 audited evaluation runs.',
   create(el){
     const { ctx, W, H } = Site.project(el,{
       lede:'Can AI agents coordinate with just one yes-or-no message? I built a code-enforced communication limit to test whether a group of agents could gain an advantage with only one shared bit per game.',
       facts:[
         { title:'The setup', detail:'AI agents form a coalition—a group working together—in a simulated task-allocation game.' },
         { title:'What I tested', detail:'Compare one bit (0 or 1) with no message, a shuffled bit, and unrestricted communication.' },
-        { title:'What I found', detail:'The main comparison with silence was inconclusive. The one-bit limit held in all 280 audited runs.' }
+        { title:'What I found', detail:'The main comparison with silence was inconclusive. The one-bit limit held in all 280 audited evaluation runs: 220 before the GPT-5 mini extension and 60 more in that extension.' }
       ],
       linkLabel:'Read the one-bit experiment and results →',
       note:'The moving square illustrates the allowed bit, not a replay of messages. Dots show score gains over silence for two model sizes; lines show 95% uncertainty intervals. Both cross zero, so neither establishes an advantage.',
