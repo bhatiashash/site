@@ -144,13 +144,25 @@
         <p>The one-bit limit held in all 280 audited evaluation runs: 220 before the GPT-5 mini extension and 60 more in that extension.</p>
         <p><a href="https://github.com/bhatiashash/one-bit-collusion-gate">Read the one-bit experiment and results</a></p>
       </section>
+      <section id="evalsets" aria-labelledby="static-evalsets-title">
+        <h2 id="static-evalsets-title">Safety evaluation sets</h2>
+        <p>Does Aya Expanse 8B refuse harmful prompts once they are transformed? I built held-out evaluation sets from HarmBench and AdvBench and measured refusal on direct prompts and on transformed copies.</p>
+        <p>Direct prompts were refused 239 of 300. Base64 copies were refused 0 of 300 and leetspeak copies were refused 44 of 300. Safe prompts were refused 10 of 250. A check of 20 base64 outputs found the model misread the encoding and answered a benign task instead, so the base64 result shows a refusal gap, not delivered harm.</p>
+        <p><a href="https://github.com/bhatiashash/lexsi-hackathon">Read the Lexsi projects and results</a></p>
+      </section>
+      <section id="tamper" aria-labelledby="static-tamper-title">
+        <h2 id="static-tamper-title">Tamper resistance</h2>
+        <p>Can a small fine-tune remove safety refusal, and can a weight repair bring it back? I fine-tuned Aya Expanse 8B with LoRA on harmful examples and then scaled the adapter back.</p>
+        <p>Before the attack the model refused 228 of 300 held-out harmful prompts. After the attack it refused 0 of 300. The repair at alpha 0.25 refused 1 of 300, so it restored almost nothing.</p>
+        <p><a href="https://github.com/bhatiashash/lexsi-hackathon">Read the Lexsi projects and results</a></p>
+      </section>
     </div>
   </noscript>
 </main>
 
 <div class="caption" id="caption"></div>
 <nav class="index" id="index" aria-label="Projects"></nav>
-<div class="hint">[&larr;] [&rarr;] or [1]-[4] to switch</div>
+<div class="hint">[&larr;] [&rarr;] or [1]-[6] to switch</div>
 
 <script>
 'use strict';
@@ -507,6 +519,114 @@ Site.register({
     return { enter(){
       if(Site.reduced){ draw(99,1); return; }
       stop=Site.loop(this,t=>{ draw(t, Site.ease(Site.clamp01(t/1.4))); });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+
+
+/* Scene 5: Safety evaluation sets. Refusal bars for direct and transformed
+   copies of the same held-out prompts; length carries the refusal share. */
+Site.register({
+  id:'evalsets', title:'Safety evaluation sets', sub:'Lexsi Labs Hackathon · Track 2 · Nov 2026',
+  repo:'https://github.com/bhatiashash/lexsi-hackathon',
+  caption:'Direct prompts refused 239 of 300.\nBase64 copies refused 0 of 300.\nLeetspeak copies refused 44 of 300.',
+  create(el){
+    const { ctx, W, H } = Site.project(el,{
+      lede:'I built adversarial evaluation sets for Aya Expanse 8B to test whether refusal holds when harmful prompts are transformed.',
+      facts:[
+        { title:'The setup', detail:'A held-out set of 300 harmful prompts from HarmBench and AdvBench, with no overlap with tuning, plus 250 safe prompts from XSTest.' },
+        { title:'What I tested', detail:'Refusal on direct prompts and on transformed versions, including base64, leetspeak, and roleplay, across 1,500 transformed prompts in total.' },
+        { title:'What I found', detail:'Direct refusal was 239 of 300. Base64 refusal was 0 of 300 and leetspeak refusal was 44 of 300. Safe prompts were refused 10 of 250.' }
+      ],
+      linkLabel:'Read the Lexsi projects and results \u2192',
+      note:'Bars show the share of prompts refused. A check of 20 base64 outputs found the model misread the encoding and answered a benign task instead, so the base64 result shows a refusal gap, not delivered harm.',
+      canvasLabel:'Prompts refused by Aya Expanse 8B: direct, 239 of 300 (79.7%); base64, 0 of 300 (0%); leetspeak, 44 of 300 (14.7%); safe prompts, 10 of 250 (4.0%).'
+    });
+    const C=Site.colors, F=Site.fonts;
+    const data=[
+      { name:'Direct', n:'239 of 300', v:239/300 },
+      { name:'Base64', n:'0 of 300', v:0 },
+      { name:'Leetspeak', n:'44 of 300', v:44/300 },
+      { name:'Safe prompts', n:'10 of 250 refused', v:10/250 }
+    ];
+    const x0=190, x1=W-150, top=52, groupH=82;
+    function draw(p){
+      ctx.clearRect(0,0,W,H);
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.g600;
+      ctx.fillText('share of prompts refused', x0, 22);
+      ctx.strokeStyle=C.g300; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(x0,36); ctx.lineTo(x0,H-16); ctx.stroke(); ctx.setLineDash([]);
+      data.forEach((d,i)=>{
+        const y=top+i*groupH;
+        ctx.font='13px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText(d.name, 8, y+16);
+        ctx.font='11px '+F.mono; ctx.fillStyle=C.g500;
+        ctx.fillText(d.n, 8, y+34);
+        const w=(x1-x0)*d.v*p;
+        ctx.fillStyle= d.v===0? C.g400 : C.accent;
+        if(d.v>0) ctx.fillRect(x0, y+8, Math.max(2,w), 8);
+        else { ctx.strokeStyle=C.g400; ctx.strokeRect(x0, y+8, 2, 8); }
+        ctx.font='12.5px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText((d.v*100).toFixed(1)+'%', x1+14, y+16);
+      });
+    }
+    let stop=null;
+    return { enter(){
+      if(Site.reduced){ draw(1); return; }
+      stop=Site.loop(this,t=>{ const p=Site.ease(Site.clamp01(t/1.6)); draw(p); if(p>=1) return false; });
+    }, exit(){ if(stop) stop(); } };
+  }
+});
+
+/* Scene 6: Tamper resistance. Refusal at baseline, after the attack, and
+   after the repair; the repair bar stays at one refusal in 300. */
+Site.register({
+  id:'tamper', title:'Tamper resistance', sub:'Lexsi Labs Hackathon · Track 2 · Nov 2026',
+  repo:'https://github.com/bhatiashash/lexsi-hackathon',
+  caption:'Baseline refused 228 of 300 held-out prompts.\nAfter the attack, 0 of 300.\nAfter the repair, 1 of 300.',
+  create(el){
+    const { ctx, W, H } = Site.project(el,{
+      lede:'I tested whether a LoRA fine-tune can remove safety refusal from Aya Expanse 8B, and whether scaling the change back repairs it.',
+      facts:[
+        { title:'The setup', detail:'Aya Expanse 8B with a settled baseline of 228 of 300 held-out harmful prompts refused and 10 of 250 safe prompts refused.' },
+        { title:'What I tested', detail:'A LoRA fine-tune on 1,000 harmful examples, then a repair that scaled the LoRA delta back at 0.75 strength, at alpha 0.25.' },
+        { title:'What I found', detail:'The attack cut held-out refusal to 0 of 300. The repair restored 1 refusal in 300, so it restored almost nothing.' }
+      ],
+      linkLabel:'Read the Lexsi projects and results \u2192',
+      note:'Bars show held-out harmful prompts refused at each stage. The attack removed refusal in full. The repair step restored one refusal.',
+      canvasLabel:'Held-out harmful prompts refused: baseline, 228 of 300 (76.0%); after the LoRA attack, 0 of 300 (0%); after the repair at alpha 0.25, 1 of 300 (0.3%).'
+    });
+    const C=Site.colors, F=Site.fonts;
+    const data=[
+      { name:'Baseline', n:'228 of 300', v:228/300 },
+      { name:'After attack', n:'0 of 300', v:0 },
+      { name:'After repair', n:'1 of 300', v:1/300 }
+    ];
+    const x0=190, x1=W-150, top=64, groupH=104;
+    function draw(p){
+      ctx.clearRect(0,0,W,H);
+      ctx.font='11px '+F.mono; ctx.fillStyle=C.g600;
+      ctx.fillText('held-out harmful prompts refused', x0, 24);
+      ctx.strokeStyle=C.g300; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(x0,40); ctx.lineTo(x0,H-16); ctx.stroke(); ctx.setLineDash([]);
+      data.forEach((d,i)=>{
+        const y=top+i*groupH;
+        ctx.font='13px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText(d.name, 8, y+16);
+        ctx.font='11px '+F.mono; ctx.fillStyle=C.g500;
+        ctx.fillText(d.n, 8, y+34);
+        const w=(x1-x0)*d.v*p;
+        ctx.fillStyle= i===0? C.accent : C.g400;
+        if(d.v>0) ctx.fillRect(x0, y+8, Math.max(2,w), 8);
+        else { ctx.strokeStyle=C.g400; ctx.strokeRect(x0, y+8, 2, 8); }
+        ctx.font='12.5px '+F.mono; ctx.fillStyle=C.ink;
+        ctx.fillText((d.v*100).toFixed(1)+'%', x1+14, y+16);
+      });
+    }
+    let stop=null;
+    return { enter(){
+      if(Site.reduced){ draw(1); return; }
+      stop=Site.loop(this,t=>{ const p=Site.ease(Site.clamp01(t/1.6)); draw(p); if(p>=1) return false; });
     }, exit(){ if(stop) stop(); } };
   }
 });
